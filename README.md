@@ -13,7 +13,7 @@ There were a variety of typos and abbreviations for street names, e.g. “Aveenu
 
 I used two regular expressions to extract the abbreviation and then a dictionary of street name abbreviations (`mapping`) to update the street names.
 
-```
+```python
 street_type_re = re.compile(r'(\b\S+\.?)$', re.IGNORECASE) 	 
 street_type_num_re = re.compile(r'(\b\S+\.?)(?= #?[0-9]+$)', re.IGNORECASE)
 
@@ -37,7 +37,7 @@ The second kind was where the field contained address information but no actual 
 
 For the first case, I simply extracted the post code using a regular expression, as shown below. For the second case, I ignored this field since there was no post code information.
 
-```
+```python
 postcode_re = re.compile(r'[0-9]{5,5}$', re.IGNORECASE)
 postcode_dash_re = re.compile(r'[0-9]{5,5}-[0-9]{4,4}$', re.IGNORECASE)
 ```
@@ -70,32 +70,35 @@ db.sfbay.find().count()
 
 How many nodes? 
 
-```
+```python
 db.sfbay.find({"type":"node"}).count()
 12270667
 ```
 
 How many ways?
-```
+
+```python
 db.sfbay.find({"type":"way"}).count()
 1297749
 ```
 
 How many unique users?
-```
+
+```python
 len(db.sfbay.distinct("created.user”))
 5141
 ```
 
 How many unique cities?
-```
+
+```python
 len(db.sfbay.distinct("address.city”))
 299
 ```
 
 Which user has the most entries?
 
-```
+```python
 def aggregate(db, pipeline):
     return [doc for doc in db.sfbay.aggregate(pipeline)]
 
