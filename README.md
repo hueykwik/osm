@@ -73,14 +73,15 @@ How many ways?
 ```db.sfbay.find({"type":"way"}).count()```
 
 How many unique users?
-len(db.sfbay.distinct("created.user"))
+```len(db.sfbay.distinct("created.user”))```
 5141
 
 How many unique cities?
-len(db.sfbay.distinct("address.city"))
+```len(db.sfbay.distinct("address.city”))```
 299
 
 Which user has the most entries?
+
 ```
 def aggregate(db, pipeline):
     return [doc for doc in db.sfbay.aggregate(pipeline)]
