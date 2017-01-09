@@ -62,23 +62,35 @@ One entry has state information listed: "Monterey, CA".
 All of these queries are written using Python/PyMongo.
 
 How many documents are there?
-```db.sfbay.find().count()```
+
+```db.sfbay.find().count()
 13568829
+```
 
 How many nodes? 
-```db.sfbay.find({"type":"node"}).count()```
+
+```
+db.sfbay.find({"type":"node"}).count()
 12270667
+```
 
 How many ways?
-```db.sfbay.find({"type":"way"}).count()```
+```
+db.sfbay.find({"type":"way"}).count()
+1297749
+```
 
 How many unique users?
-```len(db.sfbay.distinct("created.user”))```
+```
+len(db.sfbay.distinct("created.user”))
 5141
+```
 
 How many unique cities?
-```len(db.sfbay.distinct("address.city”))```
+```
+len(db.sfbay.distinct("address.city”))
 299
+```
 
 Which user has the most entries?
 
