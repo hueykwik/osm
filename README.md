@@ -111,4 +111,7 @@ aggregate(db, pipeline)
 [{u'_id': u'nmixter', u'count': 1728932}]
 ```
 
+### Distribution of User Records
+![Image of User Record Histogram](https://github.com/hueykwik/osm/blob/master/user_records_histogram.png)
+
 ## Additional Ideas
