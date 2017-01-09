@@ -112,6 +112,82 @@ aggregate(db, pipeline)
 ```
 
 ### Distribution of User Records
+I wanted to see the distribution of user contributions to this dataset. I stored the results of my query in a Pandas DataFrame and then displayed it with a histogram.
+
+```python
+pipeline = [group, sort]
+user_counts_df = pd.DataFrame(user_counts)
+display(user_counts_df.head())
+
+ax = user_count_df['count'].hist(xrot=90, bins=50)
+ax.set_xlabel('Number of records')
+ax.set_ylabel("Count of users")
+ax.set_title("Distribution of user records")
+```
+
 ![Image of User Record Histogram](https://github.com/hueykwik/osm/blob/master/user_records_histogram.png)
 
+### Cuisine Analysis
+I wanted to investigate how cuisines may differ in the region. First, we group by cuisine and count.
+
+Mexican and Burger top the list.
+
+```python
+match = {"$match": {"cuisine": {"$exists": True}}}
+group = {"$group":{"_id":"$cuisine", "count":{"$sum":1}}}
+sort = {"$sort":{"count":-1}}
+limit = {"$limit": 10}
+pipeline = [match, group, sort, limit]
+
+aggregate(db, pipeline)
+
+[{u'_id': u'mexican', u'count': 689},
+ {u'_id': u'burger', u'count': 616},
+ {u'_id': u'pizza', u'count': 471},
+ {u'_id': u'coffee_shop', u'count': 464},
+ {u'_id': u'chinese', u'count': 400},
+ {u'_id': u'sandwich', u'count': 366},
+ {u'_id': u'american', u'count': 284},
+ {u'_id': u'italian', u'count': 260},
+ {u'_id': u'japanese', u'count': 259},
+ {u'_id': u'vietnamese', u'count': 198}]
+```
+
+Both nodes and ways have cuisine fields, since some restaurants may be marked as points on the map (i.e. nodes) and others may be represented with the outline of a building (i.e. ways).
+
+We see a roughly 4 to 1 ratio of nodes to ways.
+
+```python
+match = {"$match": {"cuisine": {"$exists": True}}}
+group = {"$group":{"_id":"$type", "count":{"$sum":1}}}
+pipeline = [match, group]
+
+aggregate(db, pipeline)
+
+[{u'_id': u'way', u'count': 1106}, {u'_id': u'node', u'count': 4817}]
+```
+#### Cuisines Per City
+
+Top 3 cuisines for major Bay Area cities, based on record count:
+
+* San Francisco: Chinese, Coffee, Japanese
+* Oakland: Pizza, American, Mexican
+* Berkeley: Coffee, Pizza, Japanese
+* San Jose: Coffee, Sandwich, Mexican
+
+```python
+match = {"$match": {"cuisine": {"$exists": True}, "address.city": {"$exists": True}}}
+group = {"$group":{"_id": {"city": {"$toLower": "$address.city"}, "cuisine": "$cuisine"}, "count":{"$sum":1}}}
+project = {"$project": {"city": "$_id.city", "cuisine": "$_id.cuisine", "count":"$count"}}
+sort = {"$sort": {"city": 1, "count": -1}}
+group2 = {"$group":{"_id": "$city", "cuisines": {"$push": {"cuisine": "$cuisine", "count":"$count"}}}}
+
+pipeline = [match, group, project, sort, group2]
+aggregate(db, pipeline)
+```
+
+Since the results of the query are quite long (923 lines), I copied the results over into `cuisine_per_city.txt.`
+
 ## Additional Ideas
+
+### Address Standardization
