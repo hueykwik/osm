@@ -63,7 +63,8 @@ All of these queries are written using Python/PyMongo.
 
 How many documents are there?
 
-```db.sfbay.find().count()
+```python
+db.sfbay.find().count()
 13568829
 ```
 
