@@ -204,7 +204,7 @@ def shape_attributes(element, node):
     if has_lat_lon(element):
         node['pos'] = [float(element.attrib['lat']), float(element.attrib['lon'])]
 
-def shape_tags(element, node):
+def shape_tags(element, node, audit_data):
     address = {}
     for tag in element.iter("tag"):
         key = tag.attrib['k']
@@ -212,14 +212,17 @@ def shape_tags(element, node):
 
         if is_street_name(tag):
             value = update_street_name(value, mapping)
+            audit_street_type(audit_data['street_types'], value)
 
         if is_postcode(tag):
             if not has_valid_postcode(value):
                 continue
             value = update_postcode(value)
+            audit_data['postcodes'][value] += 1
 
         if is_county(tag):
             value = update_county(value)
+            audit_data['counties'][value] += 1
 
         #print key, value
         if (re.search(problemchars, key) or
@@ -253,7 +256,7 @@ def shape_node_refs(element, way):
             refs.append(nd.attrib['ref'])
         way['node_refs'] = refs
 
-def shape_element(element):
+def shape_element(element, audit_data):
     node = {}
     if element.tag == "node" or element.tag == "way" :
         # Handle top-level element
@@ -262,7 +265,7 @@ def shape_element(element):
         shape_attributes(element, node)
 
         # Handle tags
-        shape_tags(element, node)
+        shape_tags(element, node, audit_data)
 
         # Handle node refs for way
         shape_node_refs(element, node)
@@ -275,26 +278,31 @@ def shape_element(element):
 def process_map(file_in, pretty = False):
     file_out = "{0}.json".format(file_in)
     data = []
+
+    audit_data = {}
+    audit_data['street_types'] = defaultdict(set)
+    audit_data['postcodes'] = defaultdict(int)
+    audit_data['counties'] = defaultdict(int)
+
     with codecs.open(file_out, "w") as fo:
 
         for i, elem in enumerate(get_element(file_in)):
-            el = shape_element(elem)
+            el = shape_element(elem, audit_data)
             if el:
                 data.append(el)
                 if pretty:
                     fo.write(json.dumps(el, indent=2)+"\n")
                 else:
                     fo.write(json.dumps(el) + "\n")
-    return data
 
+    return data, audit_data
+
+def print_audit_data(audit_data):
+    for k, v in audit_data.iteritems():
+        print("%s:" % k)
+        print(v)
 
 if __name__ == "__main__":
-    street_types, post_codes, counties = audit(OSM_FILE)
-    print('Street Types:')
-    print(street_types)
-    print('Post Codes:')
-    print(post_codes)
-    print('Counties:')
-    print(counties)
+    data, audit_data = process_map(OSM_FILE, True)
+    print_audit_data(audit_data)
 
-    process_map(OSM_FILE, True)
