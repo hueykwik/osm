@@ -100,30 +100,6 @@ def is_postcode(elem):
 def is_county(elem):
     return (elem.attrib['k'] == "addr:county")
 
-def audit(osmfile):
-    osm_file = open(osmfile, "r")
-    street_types = defaultdict(set)
-    postcodes = defaultdict(int)
-    counties = defaultdict(int)
-
-    for i, elem in enumerate(get_element(osm_file)):
-        if elem.tag == "node" or elem.tag == "way":
-            for tag in elem.iter("tag"):
-                k = tag.attrib['k']
-                v = tag.attrib['v']
-
-                if is_street_name(tag):
-                    audit_street_type(street_types, v)
-
-                if is_postcode(tag):
-                    postcodes[v] += 1
-
-                if is_county(tag):
-                    counties[v] += 1
-
-    osm_file.close()
-    return street_types, postcodes, counties
-
 
 def update_name(name, mapping):
     m = street_type_re.search(name)
@@ -276,6 +252,18 @@ def shape_element(element, audit_data):
         return None
 
 def process_map(file_in, pretty = False):
+    """Audits and cleans an OSM file, output is a JSON
+    file with the same name as file_in.
+
+    Args:
+        file_in: An OSM XML file.
+        pretty: Optional varible indicating whether to add new lines
+        and indentation in the JSON file.
+
+    Returns:
+        data: JSON output
+        audit_data: dictionary results from auditing the data
+    """
     file_out = "{0}.json".format(file_in)
     data = []
 
