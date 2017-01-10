@@ -190,4 +190,35 @@ Since the results of the query are quite long (923 lines), I copied the results 
 
 ## Additional Ideas
 
-### Address Standardization
+### Address Completeness
+A problem with the dataset is that most of the records that have a cuisine field actually do not have a city field! If these records had their corresponding city field, it would likely change the Top 3 cuisines per city I noted above.
+
+```python
+no_city = db.sfbay.find({"cuisine": {"$exists": True}, "address.city": {"$exists": False}}).count()
+has_city = db.sfbay.find({"cuisine": {"$exists": True}, "address.city": {"$exists": True}}).count()
+
+print(“# Records without city field: %d" % no_city)
+print(“# Records with city field: %d" % has_city)
+
+‘# Records without city field: 3825'
+‘# Records with city field: 2098'
+```
+
+One approach to fix this would be to use coordinates to determine a record’s city. We could create polygons for each city and then check if points are within those bounds. I believe we can easily do this using Shapely.
+
+Benefits:
+* Conceptually straight-forward
+
+Anticipated Problems:
+* Not sure. If we decided to use this to verify cities (instead of just filling in blank cities), we may run into an issue where the city indicated by a point conflicts with the city listed. It’s unclear then if the issue is actually the city is wrong, or the point is wrong. This may be the type of problem that can get flagged for review by code, but not necessarily solved by code.
+
+### Pokemon Go Integration
+It would be fun to integrate Pokemon Go data into Open Street Map. People could this information to perform further analysis. For instance, there is an article that suggests that [Pokemon Go spawn points](http://pokemongohub.net/pokemon-go-spawn-points-modeled-open-street-map-data/) are highly correlated with OSM land. It also seems that this knowledge has led to more contributions to Open Street Map, even leading to a (welcome post)[https://blog.openstreetmap.org/2016/12/30/tips-pokemon-go/] on the OSM blog.
+
+In particular, I’d like to integrate PokeStops into Open Street Map.
+
+Benefits:
+* Could generate more interest in OSM, especially since Pokemon Go users may be interested in helping add information they care about
+
+Anticipated Problems:
+* It’s unclear if Niantic would allow this, as they have banned other apps that display Pokemon Go information. 
