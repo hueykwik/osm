@@ -9,9 +9,19 @@ import json
 import pandas as pd
 import seaborn as sns
 
-
 #OSM_FILE = 'san-francisco-bay_california.osm'
 OSM_FILE = "sample-k-100.osm" # Smaller file for quick iteration
+
+street_type_re = re.compile(r'(\b\S+\.?)$', re.IGNORECASE) # "300 Bernal Ave." or "900 Cy Ranch Drive"
+street_type_num_re = re.compile(r'(\b\S+\.?)(?= #?[0-9]+$)', re.IGNORECASE) # "20 Cal Avenue #32" or "15 Stevens Creek Hwy 2"
+
+postcode_re = re.compile(r'[0-9]{5,5}$', re.IGNORECASE)
+postcode_dash_re = re.compile(r'[0-9]{5,5}-[0-9]{4,4}$', re.IGNORECASE)
+
+lower = re.compile(r'^([a-z]|_)*$')
+lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
+problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+
 
 def get_element(osm_file, tags=('node', 'way', 'relation')):
     """Yield element if it is the right type of tag
@@ -25,9 +35,6 @@ def get_element(osm_file, tags=('node', 'way', 'relation')):
         if event == 'end' and elem.tag in tags:
             yield elem
             root.clear()
-
-street_type_re = re.compile(r'(\b\S+\.?)$', re.IGNORECASE) # "300 Bernal Ave." or "900 Cy Ranch Drive"
-street_type_num_re = re.compile(r'(\b\S+\.?)(?= #?[0-9]+$)', re.IGNORECASE) # "20 Cal Avenue #32" or "15 Stevens Creek Hwy 2"
 
 expected = ["Alley", "Avenue", "Boulevard", "Center", "Circle", "Common", "Commons",
             "Corte", "Court", "Courtyard", "Drive", "Expressway",
@@ -151,13 +158,6 @@ def update_county(name):
         name = m.group(1)
     return name
 
-postcode_re = re.compile(r'[0-9]{5,5}$', re.IGNORECASE)
-postcode_dash_re = re.compile(r'[0-9]{5,5}-[0-9]{4,4}$', re.IGNORECASE)
-
-lower = re.compile(r'^([a-z]|_)*$')
-lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
-problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
-
 CREATED = ["version", "changeset", "timestamp", "user", "uid"]
 POSITION = ["lat", "lon"]
 
@@ -233,6 +233,15 @@ def shape_node_refs(element, way):
         way['node_refs'] = refs
 
 def shape_element(element, audit_data):
+    """Converts an OSM node or way into corresponding JSON document.
+
+    Args:
+        element: XML element, should be "node" or "way"
+        audit_data: A dict storing results of auditing
+
+    Returns:
+        A dictionary representing the JSON document for this OSM node.
+    """
     node = {}
     if element.tag == "node" or element.tag == "way" :
         # Handle top-level element
